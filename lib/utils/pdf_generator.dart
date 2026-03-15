@@ -41,7 +41,7 @@ class PdfGenerator {
       ),
     );
 
-    // Get a safe filename
+    // Sanitize invoice number for use as filename
     final safeInvoiceNo = invoice.invoiceNo.replaceAll(RegExp(r'[^\w\-]'), '_');
     final fileName = 'invoice_$safeInvoiceNo.pdf';
 
@@ -57,18 +57,17 @@ class PdfGenerator {
       // Ensure directory exists (it should, but just in case)
       await file.parent.create(recursive: true);
       await file.writeAsBytes(bytes);
-      print('PDF saved successfully');
+      print('PDF saved successfully. Size: ${bytes.length} bytes');
       return file;
     } catch (e, stack) {
       print('Error saving PDF: $e');
       print(stack);
-      // Re-throw so the caller knows something went wrong
       throw Exception('Failed to save PDF: $e');
     }
   }
 
   // -------------------------------------------------------------------------
-  // Helper widgets (unchanged, but remove 'const' where needed)
+  // Helper widgets (unchanged, but ensure no 'const' on non‑const objects)
   // -------------------------------------------------------------------------
 
   static pw.Widget _buildHeader(Organization org, Invoice inv) {

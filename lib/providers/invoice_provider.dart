@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/invoice.dart';
 import '../models/invoice_item.dart';
 import '../database/database_helper.dart';
-
 class InvoiceProvider extends ChangeNotifier {
   List<Invoice> _invoices = [];
   List<Invoice> _filtered = [];

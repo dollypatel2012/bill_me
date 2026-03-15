@@ -2,12 +2,8 @@ import 'dart:io';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
-import '../models/organization.dart';
-import '../models/biller.dart';
-import '../models/item.dart';
-import '../models/invoice.dart';
-import '../models/invoice_item.dart';
 import 'encryption_helper.dart';
+import '../models/organization.dart'; // need this for default org
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -29,12 +25,14 @@ class DatabaseHelper {
     return await openDatabase(
       path,
       password: key,
-      version: 1,
+      version: 2, // Incremented to 2 for migration
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
   Future _onCreate(Database db, int version) async {
+    // Organization table (singleton)
     await db.execute('''
       CREATE TABLE organization (
         id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -53,11 +51,12 @@ class DatabaseHelper {
       )
     ''');
 
+    // Billers table
     await db.execute('''
       CREATE TABLE billers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customer_code TEXT UNIQUE,
-        name TEXT,
+        customer_code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
         address TEXT,
         state_code TEXT,
         state_name TEXT,
@@ -74,10 +73,11 @@ class DatabaseHelper {
       )
     ''');
 
+    // Items table
     await db.execute('''
       CREATE TABLE items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        item_name TEXT,
+        item_name TEXT NOT NULL,
         hsn_code TEXT,
         uom TEXT,
         mrp REAL,
@@ -90,15 +90,17 @@ class DatabaseHelper {
       )
     ''');
 
+    // Invoices table with customer_name column
     await db.execute('''
       CREATE TABLE invoices (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        invoice_no TEXT UNIQUE,
-        invoice_date INTEGER,
-        delivery_date INTEGER,
+        invoice_no TEXT UNIQUE NOT NULL,
+        invoice_date INTEGER NOT NULL,
+        delivery_date INTEGER NOT NULL,
         payment_mode TEXT,
         doc_no TEXT,
         customer_id INTEGER,
+        customer_name TEXT,  -- denormalized customer name
         order_type TEXT,
         beat TEXT,
         dr TEXT,
@@ -116,10 +118,11 @@ class DatabaseHelper {
       )
     ''');
 
+    // Invoice items table
     await db.execute('''
       CREATE TABLE invoice_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        invoice_id INTEGER,
+        invoice_id INTEGER NOT NULL,
         item_id INTEGER,
         item_name TEXT,
         hsn_code TEXT,
@@ -128,7 +131,7 @@ class DatabaseHelper {
         rate REAL,
         quantity REAL,
         gross_amt REAL,
-        free_gst INTEGER,
+        free_gst INTEGER DEFAULT 0,
         discount_percent REAL,
         discount_amt REAL,
         other_discount REAL,
@@ -144,9 +147,22 @@ class DatabaseHelper {
       )
     ''');
 
-    // Insert default organization row
+    // Insert default organization
     await db.insert('organization', Organization.defaultOrg().toMap());
   }
 
-  // Generic CRUD methods (you can expand)
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Migrate from version 1 to 2: add customer_name column to invoices
+    if (oldVersion < 2) {
+      try {
+        await db.execute('ALTER TABLE invoices ADD COLUMN customer_name TEXT');
+        print('Added customer_name column to invoices table');
+      } catch (e) {
+        print('Error adding customer_name column: $e (maybe already exists)');
+      }
+    }
+    // Add more migrations here for future versions
+  }
+
+  // Optional: Add helper methods for CRUD if needed, but typically done in providers.
 }

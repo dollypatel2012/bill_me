@@ -44,13 +44,10 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
   final _drController = TextEditingController();
   final _ackNoController = TextEditingController();
 
-  Invoice? _originalInvoice; // used to preserve snapshot fields when editing
-
   @override
   void initState() {
     super.initState();
     if (widget.existingInvoice != null) {
-      _originalInvoice = widget.existingInvoice;
       _loadExistingInvoice();
     }
   }
@@ -91,6 +88,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Biller selection card
             Card(
               child: ListTile(
                 title: Text(_selectedBiller?.name ?? 'Select Biller'),
@@ -99,7 +97,9 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
                 onTap: _selectBiller,
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 16),
+
+            // Invoice details card
             Card(
               child: Padding(
                 padding: EdgeInsets.all(12),
@@ -125,6 +125,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
                         ),
                       ],
                     ),
+                    SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -165,7 +166,9 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 16),
+
+            // Items section card
             Card(
               child: Padding(
                 padding: EdgeInsets.all(12),
@@ -182,7 +185,10 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
                       ],
                     ),
                     _lineItems.isEmpty
-                        ? Text('No items added')
+                        ? Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Text('No items added', style: TextStyle(color: Colors.grey)),
+                          )
                         : ListView.builder(
                             shrinkWrap: true,
                             physics: NeverScrollableScrollPhysics(),
@@ -190,6 +196,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
                             itemBuilder: (ctx, i) {
                               final item = _lineItems[i];
                               return Card(
+                                margin: EdgeInsets.only(bottom: 8),
                                 child: Padding(
                                   padding: EdgeInsets.all(8),
                                   child: Column(
@@ -207,6 +214,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
                                           ),
                                         ],
                                       ),
+                                      SizedBox(height: 8),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                                         children: [
@@ -226,7 +234,9 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 16),
+
+            // Totals card
             Card(
               child: Padding(
                 padding: EdgeInsets.all(12),
@@ -245,6 +255,8 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
               ),
             ),
             SizedBox(height: 20),
+
+            // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -264,6 +276,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
     );
   }
 
+  // Helper getters for totals
   double get _subtotal => _lineItems.fold(0, (sum, item) => sum + item.grossAmt);
   double get _totalDiscount => _lineItems.fold(0, (sum, item) => sum + item.discountAmt);
   double get _totalTax => _lineItems.fold(0, (sum, item) => sum + item.totalTax);
@@ -325,6 +338,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
   void _addItems() async {
     final items = Provider.of<ItemProvider>(context, listen: false).items;
     if (items.isEmpty) {
+      // Option to add new item on the fly
       bool? addNew = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -338,10 +352,12 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
       );
       if (addNew == true) {
         await showDialog(context: context, builder: (_) => Dialog(child: ItemForm()));
+        // Items list will refresh via provider, but we still have to show empty message
       }
       return;
     }
 
+    // Multi-select dialog
     List<Item> selectedItems = await showDialog(
       context: context,
       builder: (ctx) {
@@ -387,8 +403,9 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
     );
 
     if (selectedItems != null && selectedItems.isNotEmpty) {
+      List<InvoiceItem> newItems = [];
       for (var item in selectedItems) {
-        double qty = 1; // Default quantity
+        double qty = 1; // default quantity; you could add a quantity input dialog here
         final line = InvoiceItem(
           itemId: item.id,
           itemName: item.itemName,
@@ -410,10 +427,11 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
           totalTax: item.rate * qty * (item.cgstPercent + item.sgstPercent) / 100,
           amount: item.rate * qty * (1 + (item.cgstPercent + item.sgstPercent) / 100),
         );
-        setState(() {
-          _lineItems.add(line);
-        });
+        newItems.add(line);
       }
+      setState(() {
+        _lineItems.addAll(newItems);
+      });
     }
   }
 
@@ -434,6 +452,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
               decoration: InputDecoration(labelText: 'Quantity'),
               keyboardType: TextInputType.number,
             ),
+            SizedBox(height: 12),
             TextField(
               controller: discCtrl,
               decoration: InputDecoration(labelText: 'Discount %'),

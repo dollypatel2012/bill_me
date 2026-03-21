@@ -24,7 +24,7 @@ class ItemsScreen extends StatelessWidget {
               padding: EdgeInsets.all(8),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 1.5,
+                childAspectRatio: 1.4,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),
@@ -36,7 +36,7 @@ class ItemsScreen extends StatelessWidget {
                     onTap: () => _editItem(context, item),
                     onLongPress: () => _deleteItem(context, item),
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

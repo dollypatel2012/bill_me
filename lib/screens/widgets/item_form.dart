@@ -38,74 +38,88 @@ class _ItemFormState extends State<ItemForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 400,
-      padding: EdgeInsets.all(16),
-      child: Form(
-        key: _formKey,
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Text(widget.item == null ? 'Add Item' : 'Edit Item',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: 'Item Name *'),
-              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-            ),
-            TextFormField(
-              controller: _hsnController,
-              decoration: InputDecoration(labelText: 'HSN Code'),
-            ),
-            TextFormField(
-              controller: _uomController,
-              decoration: InputDecoration(labelText: 'UOM *'),
-              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-            ),
-            TextFormField(
-              controller: _mrpController,
-              decoration: InputDecoration(labelText: 'MRP *'),
-              keyboardType: TextInputType.number,
-              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-            ),
-            TextFormField(
-              controller: _rateController,
-              decoration: InputDecoration(labelText: 'Selling Rate *'),
-              keyboardType: TextInputType.number,
-              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-            ),
-            Row(
+    return AlertDialog(
+      title: Text(widget.item == null ? 'Add Item' : 'Edit Item'),
+      content: SingleChildScrollView(
+        child: Container(
+          width: 400,
+          padding: const EdgeInsets.all(8),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _cgstController,
-                    decoration: InputDecoration(labelText: 'CGST %'),
-                    keyboardType: TextInputType.number,
-                  ),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Item Name *'),
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                 ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _sgstController,
-                    decoration: InputDecoration(labelText: 'SGST %'),
-                    keyboardType: TextInputType.number,
-                  ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _hsnController,
+                  decoration: const InputDecoration(labelText: 'HSN Code'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _uomController,
+                  decoration: const InputDecoration(labelText: 'UOM *'),
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _mrpController,
+                  decoration: const InputDecoration(labelText: 'MRP *'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _rateController,
+                  decoration: const InputDecoration(labelText: 'Selling Rate *'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _cgstController,
+                        decoration: const InputDecoration(labelText: 'CGST %'),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _sgstController,
+                        decoration: const InputDecoration(labelText: 'SGST %'),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _stockController,
+                  decoration: const InputDecoration(labelText: 'Stock Quantity'),
+                  keyboardType: TextInputType.number,
                 ),
               ],
             ),
-            TextFormField(
-              controller: _stockController,
-              decoration: InputDecoration(labelText: 'Stock Quantity'),
-              keyboardType: TextInputType.number,
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _save,
-              child: Text('Save'),
-            ),
-          ],
+          ),
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _save,
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 

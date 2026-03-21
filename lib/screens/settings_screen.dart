@@ -16,7 +16,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late Organization _org;
   bool _isLoading = true;
 
-  // Controllers for each field
   late TextEditingController _nameController;
   late TextEditingController _addressLine1Controller;
   late TextEditingController _addressLine2Controller;
@@ -71,7 +70,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _saveSettings() async {
     if (!_formKey.currentState!.validate()) return;
-    _formKey.currentState!.save();
 
     final updatedOrg = Organization(
       id: _org.id,
@@ -89,12 +87,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       signaturePath: _org.signaturePath,
     );
 
-    await Provider.of<OrganizationProvider>(context, listen: false)
-        .updateOrganization(updatedOrg);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Settings saved')),
-    );
-    Navigator.pop(context); // optionally go back
+    try {
+      await Provider.of<OrganizationProvider>(context, listen: false)
+          .updateOrganization(updatedOrg);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Settings saved successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving: $e')),
+      );
+    }
   }
 
   @override
@@ -111,25 +114,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             const Text('Organization Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Business Name *'),
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
             ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _addressLine1Controller,
               decoration: const InputDecoration(labelText: 'Address Line 1 *'),
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
             ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _addressLine2Controller,
               decoration: const InputDecoration(labelText: 'Address Line 2 (optional)'),
             ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _cityController,
               decoration: const InputDecoration(labelText: 'City (optional)'),
             ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -139,7 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 16),
                 Expanded(
                   child: TextFormField(
                     controller: _stateNameController,
@@ -149,33 +156,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _fssaiNoController,
               decoration: const InputDecoration(labelText: 'FSSAI No *'),
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
             ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _cinController,
               decoration: const InputDecoration(labelText: 'CIN (optional)'),
             ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _gstinController,
               decoration: const InputDecoration(labelText: 'GSTIN *'),
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
             ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _phoneController,
               decoration: const InputDecoration(labelText: 'Phone *'),
               keyboardType: TextInputType.phone,
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
             ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _panController,
               decoration: const InputDecoration(labelText: 'PAN *'),
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             ListTile(
+              contentPadding: EdgeInsets.zero,
               title: const Text('Signature'),
               subtitle: _org.signaturePath != null
                   ? Image.file(File(_org.signaturePath!), height: 50)
@@ -190,6 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: _saveSettings,
               child: const Text('Save Settings'),
             ),
+            const SizedBox(height: 40),
           ],
         ),
       ),

@@ -14,7 +14,6 @@ import 'screens/bill_generation_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize providers (load data)
   runApp(MyApp());
 }
 
@@ -30,7 +29,61 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Billing App',
-        theme: ThemeData(primarySwatch: Colors.blue),
+        theme: ThemeData(
+          brightness: Brightness.light,
+          primarySwatch: Colors.blue,
+          scaffoldBackgroundColor: Colors.grey[50],
+          appBarTheme: AppBarTheme(
+            elevation: 0,
+            centerTitle: true,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.blue[800],
+            titleTextStyle: const TextStyle(
+              color: Colors.black87,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          cardTheme: CardThemeData(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            clipBehavior: Clip.antiAlias,
+            margin: const EdgeInsets.all(16), // Add margin around cards
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          textTheme: const TextTheme(
+            bodyLarge: TextStyle(fontSize: 16, color: Colors.black87),
+            bodyMedium: TextStyle(fontSize: 14, color: Colors.black87),
+            titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.black87),
+          ),
+        ),
         home: MainScreen(),
         debugShowCheckedModeBanner: false,
       ),
@@ -62,6 +115,8 @@ class _MainScreenState extends State<MainScreen> {
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.blue[700],
+        unselectedItemColor: Colors.grey[600],
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Billers'),
@@ -79,7 +134,8 @@ class _MainScreenState extends State<MainScreen> {
                   MaterialPageRoute(builder: (_) => BillGenerationScreen()),
                 );
               },
-              child: Icon(Icons.add),
+              child: const Icon(Icons.add),
+              backgroundColor: Colors.blue[700],
             )
           : null,
     );

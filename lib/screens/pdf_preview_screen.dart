@@ -1,18 +1,26 @@
 import 'dart:io';
-import 'package:provider/provider.dart'; 
-import '../providers/invoice_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
+import 'package:provider/provider.dart';
 import '../models/invoice.dart';
+import '../models/biller.dart';
 import '../models/invoice_item.dart';
+import '../providers/invoice_provider.dart';
 import '../services/share_service.dart';
+import '../utils/pdf_generator.dart';
 
 class PdfPreviewScreen extends StatelessWidget {
   final File pdfFile;
   final Invoice invoice;
   final List<InvoiceItem> items;
+  final Biller biller;  // <-- Add this
 
-  PdfPreviewScreen({required this.pdfFile, required this.invoice, required this.items});
+  PdfPreviewScreen({
+    required this.pdfFile,
+    required this.invoice,
+    required this.items,
+    required this.biller,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +30,15 @@ class PdfPreviewScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.share),
-            onPressed: () => ShareService.sharePdf(pdfFile),
+            onPressed: () async {
+              // Use share service
+              await ShareService.sharePdf(pdfFile);
+            },
           ),
           IconButton(
             icon: Icon(Icons.save),
             onPressed: () async {
-              // Save invoice to database
+              // Save the invoice to database
               await Provider.of<InvoiceProvider>(context, listen: false)
                   .saveCompleteInvoice(invoice, items);
               ScaffoldMessenger.of(context).showSnackBar(

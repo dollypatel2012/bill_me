@@ -38,30 +38,29 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
   double _otherDiscount = 0.0;
   double _creditAdj = 0.0;
 
-  // Controllers for editable fields
   final _docNoController = TextEditingController();
   final _orderTypeController = TextEditingController();
   final _beatController = TextEditingController();
   final _drController = TextEditingController();
   final _ackNoController = TextEditingController();
 
+  Invoice? _originalInvoice; // used to preserve snapshot fields when editing
+
   @override
   void initState() {
     super.initState();
     if (widget.existingInvoice != null) {
+      _originalInvoice = widget.existingInvoice;
       _loadExistingInvoice();
     }
   }
 
   void _loadExistingInvoice() async {
     final inv = widget.existingInvoice!;
-    // Load biller
     final billerProvider = Provider.of<BillerProvider>(context, listen: false);
     _selectedBiller = await billerProvider.getBillerById(inv.customerId!);
-    // Load line items
     final invoiceProvider = Provider.of<InvoiceProvider>(context, listen: false);
     _lineItems = await invoiceProvider.getInvoiceItems(inv.id!);
-    // Set fields
     _paymentMode = inv.paymentMode;
     _invoiceDate = inv.invoiceDate;
     _deliveryDate = inv.deliveryDate;
@@ -92,7 +91,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Biller selection
             Card(
               child: ListTile(
                 title: Text(_selectedBiller?.name ?? 'Select Biller'),
@@ -102,7 +100,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
               ),
             ),
             SizedBox(height: 10),
-            // Invoice details
             Card(
               child: Padding(
                 padding: EdgeInsets.all(12),
@@ -169,7 +166,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
               ),
             ),
             SizedBox(height: 10),
-            // Items section
             Card(
               child: Padding(
                 padding: EdgeInsets.all(12),
@@ -231,7 +227,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
               ),
             ),
             SizedBox(height: 10),
-            // Totals
             Card(
               child: Padding(
                 padding: EdgeInsets.all(12),
@@ -250,7 +245,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
               ),
             ),
             SizedBox(height: 20),
-            // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -270,12 +264,11 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
     );
   }
 
-  // Helper getters for totals
   double get _subtotal => _lineItems.fold(0, (sum, item) => sum + item.grossAmt);
   double get _totalDiscount => _lineItems.fold(0, (sum, item) => sum + item.discountAmt);
   double get _totalTax => _lineItems.fold(0, (sum, item) => sum + item.totalTax);
   double get _netPayable => _subtotal - _totalDiscount - _otherDiscount + _totalTax - _creditAdj;
-  String get _amountInWords => 'Rupees ${_netPayable.toStringAsFixed(2)} only'; // replace with actual converter
+  String get _amountInWords => 'Rupees ${_netPayable.toStringAsFixed(2)} only';
 
   Widget _buildTotalRow(String label, double value, {bool isBold = false}) {
     return Padding(
@@ -296,7 +289,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No billers found. Add one first.')));
       return;
     }
-    // Show a simple dialog with list
     Biller? selected = await showDialog<Biller>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -320,7 +312,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
     if (selected != null) {
       setState(() {
         _selectedBiller = selected;
-        // Pre-fill order type, beat, dr from biller
         _orderType = selected.orderType ?? '';
         _beat = selected.beat ?? '';
         _dr = selected.dr ?? '';
@@ -334,7 +325,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
   void _addItems() async {
     final items = Provider.of<ItemProvider>(context, listen: false).items;
     if (items.isEmpty) {
-      // Option to add new item on the fly
       bool? addNew = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -348,12 +338,10 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
       );
       if (addNew == true) {
         await showDialog(context: context, builder: (_) => Dialog(child: ItemForm()));
-        // Refresh items list (provider should notify)
       }
       return;
     }
 
-    // Multi-select dialog
     List<Item> selectedItems = await showDialog(
       context: context,
       builder: (ctx) {
@@ -400,9 +388,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
 
     if (selectedItems != null && selectedItems.isNotEmpty) {
       for (var item in selectedItems) {
-        // Ask quantity for each? For simplicity, default qty=1
-        double qty = 1;
-        // Could show a dialog to input quantity
+        double qty = 1; // Default quantity
         final line = InvoiceItem(
           itemId: item.id,
           itemName: item.itemName,
@@ -432,7 +418,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
   }
 
   void _editLineItem(int index) {
-    // Show a dialog to edit quantity and discount for that line
     final item = _lineItems[index];
     TextEditingController qtyCtrl = TextEditingController(text: item.quantity.toString());
     TextEditingController discCtrl = TextEditingController(text: item.discountPercent.toString());
@@ -500,13 +485,34 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
       return;
     }
 
-    final org = await Provider.of<OrganizationProvider>(context, listen: false).getOrganization();
-
     String invoiceNo;
     if (widget.existingInvoice != null) {
       invoiceNo = widget.existingInvoice!.invoiceNo;
     } else {
       invoiceNo = await InvoiceNumberGenerator.generateInvoiceNumber();
+    }
+
+    // Determine organization snapshot fields
+    String? orgName, orgAddressLine1, orgAddressLine2, orgGstin, orgPhone, orgFssaiNo, orgPan;
+    if (widget.existingInvoice != null) {
+      // Keep original snapshot when editing
+      orgName = widget.existingInvoice!.orgName;
+      orgAddressLine1 = widget.existingInvoice!.orgAddressLine1;
+      orgAddressLine2 = widget.existingInvoice!.orgAddressLine2;
+      orgGstin = widget.existingInvoice!.orgGstin;
+      orgPhone = widget.existingInvoice!.orgPhone;
+      orgFssaiNo = widget.existingInvoice!.orgFssaiNo;
+      orgPan = widget.existingInvoice!.orgPan;
+    } else {
+      // For new invoice, fetch current organization
+      final org = await Provider.of<OrganizationProvider>(context, listen: false).getOrganization();
+      orgName = org.name;
+      orgAddressLine1 = org.addressLine1;
+      orgAddressLine2 = org.addressLine2;
+      orgGstin = org.gstin;
+      orgPhone = org.phone;
+      orgFssaiNo = org.fssaiNo;
+      orgPan = org.pan;
     }
 
     final invoice = Invoice(
@@ -517,6 +523,14 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
       paymentMode: _paymentMode,
       docNo: _docNo.isNotEmpty ? _docNo : null,
       customerId: _selectedBiller!.id,
+      customerName: _selectedBiller!.name,
+      orgName: orgName,
+      orgAddressLine1: orgAddressLine1,
+      orgAddressLine2: orgAddressLine2,
+      orgGstin: orgGstin,
+      orgPhone: orgPhone,
+      orgFssaiNo: orgFssaiNo,
+      orgPan: orgPan,
       orderType: _orderType.isNotEmpty ? _orderType : null,
       beat: _beat.isNotEmpty ? _beat : null,
       dr: _dr.isNotEmpty ? _dr : null,
@@ -525,7 +539,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
       totalDiscount: _totalDiscount,
       otherDiscount: _otherDiscount,
       totalTax: _totalTax,
-      roundOff: 0, // could compute if needed
+      roundOff: 0,
       netPayable: _netPayable,
       amountInWords: _amountInWords,
       creditAdj: _creditAdj,
@@ -533,9 +547,8 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
     );
 
     final pdfFile = await PdfGenerator.generateInvoice(
-      organization: org,
-      biller: _selectedBiller!,
       invoice: invoice,
+      biller: _selectedBiller!,
       items: _lineItems,
     );
 
@@ -546,6 +559,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
           pdfFile: pdfFile,
           invoice: invoice,
           items: _lineItems,
+          biller: _selectedBiller!,
         ),
       ),
     );

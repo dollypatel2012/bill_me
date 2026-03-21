@@ -6,7 +6,18 @@ class Invoice {
   String paymentMode;
   String? docNo;
   int? customerId;
-  String? customerName; // denormalized
+  String? customerName;
+
+  // Organization snapshot fields (stored at invoice creation time)
+  String? orgName;
+  String? orgAddressLine1;
+  String? orgAddressLine2;
+  String? orgGstin;
+  String? orgPhone;
+  String? orgFssaiNo;
+  String? orgPan;
+
+  // Other invoice fields
   String? orderType;
   String? beat;
   String? dr;
@@ -30,6 +41,13 @@ class Invoice {
     this.docNo,
     this.customerId,
     this.customerName,
+    this.orgName,
+    this.orgAddressLine1,
+    this.orgAddressLine2,
+    this.orgGstin,
+    this.orgPhone,
+    this.orgFssaiNo,
+    this.orgPan,
     this.orderType,
     this.beat,
     this.dr,
@@ -55,6 +73,13 @@ class Invoice {
       'doc_no': docNo,
       'customer_id': customerId,
       'customer_name': customerName,
+      'org_name': orgName,
+      'org_address_line1': orgAddressLine1,
+      'org_address_line2': orgAddressLine2,
+      'org_gstin': orgGstin,
+      'org_phone': orgPhone,
+      'org_fssai_no': orgFssaiNo,
+      'org_pan': orgPan,
       'order_type': orderType,
       'beat': beat,
       'dr': dr,
@@ -81,6 +106,13 @@ class Invoice {
       docNo: map['doc_no'],
       customerId: map['customer_id'],
       customerName: map['customer_name'],
+      orgName: map['org_name'],
+      orgAddressLine1: map['org_address_line1'],
+      orgAddressLine2: map['org_address_line2'],
+      orgGstin: map['org_gstin'],
+      orgPhone: map['org_phone'],
+      orgFssaiNo: map['org_fssai_no'],
+      orgPan: map['org_pan'],
       orderType: map['order_type'],
       beat: map['beat'],
       dr: map['dr'],

@@ -5,7 +5,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Biller Buddy'),
         automaticallyImplyLeading: false,
       ),
       body: Center(
@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
             Icon(Icons.receipt, size: 80, color: Colors.blue),
             SizedBox(height: 20),
             Text(
-              'Welcome to Billing App',
+              'Welcome to Biller Buddy',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),

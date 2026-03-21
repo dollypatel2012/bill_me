@@ -276,7 +276,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
     );
   }
 
-  // Helper getters for totals
   double get _subtotal => _lineItems.fold(0, (sum, item) => sum + item.grossAmt);
   double get _totalDiscount => _lineItems.fold(0, (sum, item) => sum + item.discountAmt);
   double get _totalTax => _lineItems.fold(0, (sum, item) => sum + item.totalTax);
@@ -297,7 +296,12 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
   }
 
   void _selectBiller() async {
-    final billers = Provider.of<BillerProvider>(context, listen: false).billers;
+    final billerProvider = Provider.of<BillerProvider>(context, listen: false);
+    // Ensure data is loaded before showing the dialog
+    if (billerProvider.billers.isEmpty) {
+      await billerProvider.loadBillers();
+    }
+    final billers = billerProvider.billers;
     if (billers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No billers found. Add one first.')));
       return;
@@ -336,9 +340,13 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
   }
 
   void _addItems() async {
-    final items = Provider.of<ItemProvider>(context, listen: false).items;
+    final itemProvider = Provider.of<ItemProvider>(context, listen: false);
+    // Ensure data is loaded before showing the dialog
+    if (itemProvider.items.isEmpty) {
+      await itemProvider.loadItems();
+    }
+    final items = itemProvider.items;
     if (items.isEmpty) {
-      // Option to add new item on the fly
       bool? addNew = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -352,12 +360,10 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
       );
       if (addNew == true) {
         await showDialog(context: context, builder: (_) => Dialog(child: ItemForm()));
-        // Items list will refresh via provider, but we still have to show empty message
       }
       return;
     }
 
-    // Multi-select dialog
     List<Item> selectedItems = await showDialog(
       context: context,
       builder: (ctx) {
@@ -405,7 +411,7 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
     if (selectedItems != null && selectedItems.isNotEmpty) {
       List<InvoiceItem> newItems = [];
       for (var item in selectedItems) {
-        double qty = 1; // default quantity; you could add a quantity input dialog here
+        double qty = 1; // default quantity
         final line = InvoiceItem(
           itemId: item.id,
           itemName: item.itemName,
@@ -511,10 +517,8 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
       invoiceNo = await InvoiceNumberGenerator.generateInvoiceNumber();
     }
 
-    // Determine organization snapshot fields
     String? orgName, orgAddressLine1, orgAddressLine2, orgGstin, orgPhone, orgFssaiNo, orgPan;
     if (widget.existingInvoice != null) {
-      // Keep original snapshot when editing
       orgName = widget.existingInvoice!.orgName;
       orgAddressLine1 = widget.existingInvoice!.orgAddressLine1;
       orgAddressLine2 = widget.existingInvoice!.orgAddressLine2;
@@ -523,7 +527,6 @@ class _BillGenerationScreenState extends State<BillGenerationScreen> {
       orgFssaiNo = widget.existingInvoice!.orgFssaiNo;
       orgPan = widget.existingInvoice!.orgPan;
     } else {
-      // For new invoice, fetch current organization
       final org = await Provider.of<OrganizationProvider>(context, listen: false).getOrganization();
       orgName = org.name;
       orgAddressLine1 = org.addressLine1;
